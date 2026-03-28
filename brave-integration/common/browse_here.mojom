@@ -18,7 +18,7 @@ struct VideoSource {
   string source_host;
 };
 
-// Represents a saved playlist entry (stored to disk via KeyedService).
+// Represents a saved playlist entry persisted by BrowseHereService.
 struct PlaylistEntry {
   int32 id;
   string url;
@@ -28,51 +28,52 @@ struct PlaylistEntry {
   double? duration;
   string? thumbnail;
   string source_host;
-  string added_at;  // ISO 8601
+  string added_at;  // ISO 8601 UTC
 };
 
 // ---------------------------------------------------------
-// Renderer -> Browser: report detected videos
+// Renderer → Browser: renderer scanner calls this
 // ---------------------------------------------------------
-// Implemented in the browser process (BrowseHereService).
+// Implemented in the browser process by BrowseHereService.
+// Bound via GetBrowserInterfaceBroker in BrowseHereRenderFrameObserver.
 interface BrowseHereHost {
-  // Called by the renderer content script when it detects video sources
-  // on the currently active page.
-  OnVideosDetected(array<VideoSource> videos, string page_title, string page_url);
+  // Called when the renderer scanner finds video sources on the current page.
+  OnVideosDetected(array<VideoSource> videos,
+                   string page_title,
+                   string page_url);
 };
 
 // ---------------------------------------------------------
-// Browser -> Renderer: commands sent to the scanner
+// Browser → WebUI page: events pushed to chrome://browse-here
 // ---------------------------------------------------------
-// Implemented in the renderer process.
-interface BrowseHereClient {
-  // Ask the renderer to re-scan the current page immediately.
-  RequestScan();
+// Implemented in the frontend by BrowseHerePageCallbackRouter (generated).
+interface BrowseHerePage {
+  // Fired whenever the active tab's scanner reports new videos.
+  OnVideosDetected(array<VideoSource> videos,
+                   string page_title,
+                   string page_url);
 };
 
 // ---------------------------------------------------------
-// WebUI <-> Browser: the brave://browse-here page uses this
+// WebUI page → Browser: chrome://browse-here calls this
 // ---------------------------------------------------------
-// Implemented in the browser process (BrowseHerePageHandler).
+// Implemented in the browser process by BrowseHereUI.
 interface BrowseHerePageHandler {
+  // Supply the page remote so the browser can push events to the WebUI.
+  SetPage(pending_remote<BrowseHerePage> page);
+
   // Fetch saved playlist entries from disk.
   GetPlaylist() => (array<PlaylistEntry> entries);
 
-  // Add a detected video to the persistent playlist.
+  // Add a video to the persistent playlist.
   AddToPlaylist(VideoSource video) => (PlaylistEntry entry);
 
-  // Remove an entry from the playlist by ID.
+  // Remove an entry by ID.
   RemoveFromPlaylist(int32 id) => (bool success);
 
-  // Get the most recently detected videos (from the active tab).
+  // Get the most recently detected videos from the active tab.
   GetDetectedVideos() => (array<VideoSource> videos, string page_title);
 
-  // Trigger a fresh scan of the active tab.
+  // Trigger a fresh DOM scan on the active tab.
   ScanCurrentPage();
-};
-
-// Events pushed from the browser to the WebUI page.
-interface BrowseHerePage {
-  // Called when the scanner detects new videos on the active tab.
-  OnVideosDetected(array<VideoSource> videos, string page_title, string page_url);
 };
