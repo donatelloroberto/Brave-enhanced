@@ -9,15 +9,14 @@
 
 #include <utility>
 
-#include "brave/browser/brave_browser_process.h"
 #include "brave/browser/browse_here/browse_here_service_factory.h"
+#include "brave/browser/ui/webui/brave_webui_source.h"
 #include "brave/components/browse_here/browser/browse_here_service.h"
-#include "brave/components/browse_here/common/url_constants.h"
+#include "brave/components/constants/webui_url_constants.h"
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_finder.h"
 #include "chrome/browser/ui/tabs/tab_strip_model.h"
-#include "content/public/browser/browser_context.h"
 #include "content/public/browser/render_frame_host.h"
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_ui.h"
@@ -26,30 +25,24 @@
 
 namespace {
 
-content::WebUIDataSource* CreateBrowseHereDataSource() {
-  content::WebUIDataSource* source =
-      content::WebUIDataSource::Create(kBrowseHereHost);
-
-  // Add all built resources (from grit)
-  source->AddResourcePaths(kBrowseHereResources);
-  source->SetDefaultResource(IDR_BROWSE_HERE_HTML);
-
-  // Security: allow the page to use the mojo bindings
-  source->OverrideContentSecurityPolicy(
-      network::mojom::CSPDirectiveName::ScriptSrc,
-      "script-src 'self' chrome://resources;");
-
-  return source;
-}
+// Matches entries in brave/browser/resources/browse_here/browse_here_resources.grd
+// and the corresponding IDR_ constants generated into grit/brave_browse_here_resources.h
+constexpr webui::ResourcePath kBrowseHereResources[] = {
+    {"browse_here.html", IDR_BROWSE_HERE_HTML},
+    {"browse_here.js",   IDR_BROWSE_HERE_JS},
+    {"browse_here.css",  IDR_BROWSE_HERE_CSS},
+};
 
 }  // namespace
 
 WEB_UI_CONTROLLER_TYPE_IMPL(BrowseHereUI)
 
 BrowseHereUI::BrowseHereUI(content::WebUI* web_ui)
-    : ui::MojoWebUIController(web_ui, true) {
-  Profile* profile = Profile::FromWebUI(web_ui);
-  content::WebUIDataSource::Add(profile, CreateBrowseHereDataSource());
+    : ui::MojoWebUIController(web_ui, /*enable_chrome_send=*/true) {
+  // Use Brave's CreateAndAddWebUIDataSource helper — handles CSP, adds resource
+  // paths, and registers the data source with the browser context.
+  CreateAndAddWebUIDataSource(web_ui, kBrowseHereHost, kBrowseHereResources,
+                              IDR_BROWSE_HERE_HTML);
 }
 
 BrowseHereUI::~BrowseHereUI() = default;
@@ -62,7 +55,7 @@ void BrowseHereUI::BindInterface(
 }
 
 // ---------------------------------------------------------------------------
-// BrowseHerePageHandler implementations — delegates to BrowseHereService
+// Private helper
 // ---------------------------------------------------------------------------
 
 browse_here::BrowseHereService* BrowseHereUI::GetService() {
@@ -70,12 +63,22 @@ browse_here::BrowseHereService* BrowseHereUI::GetService() {
   return BrowseHereServiceFactory::GetForProfile(profile);
 }
 
+// ---------------------------------------------------------------------------
+// BrowseHerePageHandler Mojo implementations
+// ---------------------------------------------------------------------------
+
+void BrowseHereUI::SetPage(
+    mojo::PendingRemote<brave_browse_here::mojom::BrowseHerePage> page) {
+  GetService()->SetPageRemote(std::move(page));
+}
+
 void BrowseHereUI::GetPlaylist(GetPlaylistCallback callback) {
   GetService()->GetPlaylist(std::move(callback));
 }
 
-void BrowseHereUI::AddToPlaylist(brave_browse_here::mojom::VideoSourcePtr video,
-                                  AddToPlaylistCallback callback) {
+void BrowseHereUI::AddToPlaylist(
+    brave_browse_here::mojom::VideoSourcePtr video,
+    AddToPlaylistCallback callback) {
   GetService()->AddToPlaylist(std::move(video), std::move(callback));
 }
 
@@ -91,7 +94,6 @@ void BrowseHereUI::GetDetectedVideos(GetDetectedVideosCallback callback) {
 }
 
 void BrowseHereUI::ScanCurrentPage() {
-  // Find the active tab and send a re-scan message to the renderer
   Browser* browser = chrome::FindLastActive();
   if (!browser) return;
 
@@ -99,9 +101,9 @@ void BrowseHereUI::ScanCurrentPage() {
       browser->tab_strip_model()->GetActiveWebContents();
   if (!web_contents) return;
 
-  // The renderer scanner is always injected; we just ask it to re-run.
-  web_contents->GetPrimaryMainFrame()->ExecuteJavaScriptInIsolatedWorld(
+  // Trigger window.__browseHereRescan() on the active tab.
+  // This runs in the main world where the injected scanner lives.
+  web_contents->GetPrimaryMainFrame()->ExecuteJavaScript(
       u"window.__browseHereRescan && window.__browseHereRescan();",
-      base::NullCallback(),
-      content::ISOLATED_WORLD_ID_CONTENT_END);
+      base::NullCallback());
 }
