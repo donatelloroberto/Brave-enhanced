@@ -1,0 +1,20 @@
+diff --git a/chrome/browser/BUILD.gn b/chrome/browser/BUILD.gn
+index 68375e1d44734b733c0716a37a5f0a88cbb441d5..76b8f6e83e7c81c5bf08ddb13738773e69901642 100644
+--- a/chrome/browser/BUILD.gn
++++ b/chrome/browser/BUILD.gn
+@@ -2509,6 +2509,7 @@ static_library("browser") {
+   } else {
+     sources += [ "net/net_error_diagnostics_dialog_stub.cc" ]
+   }
++  import("//brave/browser/sources.gni") sources += brave_chrome_browser_sources deps += brave_chrome_browser_deps public_deps += brave_chrome_browser_public_deps allow_circular_includes_from += brave_chrome_browser_allow_circular_includes_from
+ 
+   if (is_android) {
+     sources += [
+@@ -8451,6 +8452,7 @@ static_library("browser_public_dependencies") {
+       "//rlz:rlz_lib",
+     ]
+   }
++  import("//brave/browser/sources.gni") public_deps += brave_chrome_browser_public_deps
+ }
+ 
+ # All generated files in //chrome/browser/ depended on by

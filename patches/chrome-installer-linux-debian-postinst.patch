@@ -1,0 +1,12 @@
+diff --git a/chrome/installer/linux/debian/postinst b/chrome/installer/linux/debian/postinst
+index 0613a69af29b01822254170fb0e42178c45bda12..7483b20bd469ad1f85086c8b182dba9337d607ab 100755
+--- a/chrome/installer/linux/debian/postinst
++++ b/chrome/installer/linux/debian/postinst
+@@ -45,6 +45,7 @@ case $CHANNEL in
+     PRIORITY=0
+     ;;
+ esac
++PRIORITY="`expr $PRIORITY + 1`"
+ 
+ update-alternatives --install /usr/bin/x-www-browser x-www-browser \
+   /usr/bin/@@usr_bin_symlink_name $PRIORITY
