@@ -5,13 +5,16 @@
 
 // DROP INTO: brave/browser/resources/browse_here/src/browse_here_api.ts
 //
-// This file wraps the Mojo interface so the React components never
-// talk to Mojo directly. The rest of the UI uses this API layer only.
+// This file wraps the Mojo interface so React components never talk to
+// Mojo directly. It is the ONLY file in the WebUI that imports from
+// the generated mojom-webui module.
+//
+// The generated file path after Mojo compilation is:
+//   gen/brave/components/browse_here/common/browse_here.mojom-webui.js
 
 import {
   BrowseHerePageHandler,
   BrowseHerePageHandlerRemote,
-  BrowseHerePage,
   BrowseHerePageCallbackRouter,
   VideoSource,
   PlaylistEntry,
@@ -20,29 +23,31 @@ import {
 export type { VideoSource, PlaylistEntry };
 
 // -----------------------------------------------------------------------
-// Singleton handler remote (browser-process bridge)
+// Singleton handler remote (backed by browser-process BrowseHereUI)
 // -----------------------------------------------------------------------
 
 let handlerInstance: BrowseHerePageHandlerRemote | null = null;
 let callbackRouter: BrowseHerePageCallbackRouter | null = null;
 
-export function getHandler(): BrowseHerePageHandlerRemote {
+function getHandler(): BrowseHerePageHandlerRemote {
   if (!handlerInstance) {
     handlerInstance = BrowseHerePageHandler.getRemote();
   }
   return handlerInstance;
 }
 
-export function getCallbackRouter(): BrowseHerePageCallbackRouter {
+function getCallbackRouter(): BrowseHerePageCallbackRouter {
   if (!callbackRouter) {
     callbackRouter = new BrowseHerePageCallbackRouter();
+    // Register the page remote so the browser can push events to this page.
+    // Matches the SetPage() method added to BrowseHerePageHandler.mojom.
     getHandler().setPage(callbackRouter.$.bindNewPipeAndPassRemote());
   }
   return callbackRouter;
 }
 
 // -----------------------------------------------------------------------
-// Typed API surface consumed by React components
+// Typed API consumed by React components
 // -----------------------------------------------------------------------
 
 export async function getPlaylist(): Promise<PlaylistEntry[]> {
@@ -73,7 +78,7 @@ export function scanCurrentPage(): void {
 }
 
 // -----------------------------------------------------------------------
-// Event subscriptions (push from browser → WebUI)
+// Live event subscription — browser pushes when scanner detects videos
 // -----------------------------------------------------------------------
 
 type VideosDetectedHandler = (
@@ -84,5 +89,7 @@ type VideosDetectedHandler = (
 
 export function onVideosDetected(handler: VideosDetectedHandler): () => void {
   const listenerId = getCallbackRouter().onVideosDetected.addListener(handler);
-  return () => getCallbackRouter().onVideosDetected.removeListener(listenerId);
+  return () => {
+    getCallbackRouter().onVideosDetected.removeListener(listenerId);
+  };
 }
