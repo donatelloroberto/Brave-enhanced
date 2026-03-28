@@ -1,0 +1,20 @@
+--- a/components/constants/webui_url_constants.h
++++ b/components/constants/webui_url_constants.h
+@@ -19,6 +19,9 @@
+ inline constexpr char kBraveAccountHost[] = "account";
+ inline constexpr char kBraveAccountURL[] = "chrome://account/";
++// BrowseHere — built-in video player / detector (chrome://browse-here)
++inline constexpr char kBrowseHereHost[] = "browse-here";
++inline constexpr char kBrowseHereURL[]  = "chrome://browse-here/";
++
+ inline constexpr char kAdblockHost[] = "adblock";
+ inline constexpr char kAdblockInternalsHost[] = "adblock-internals";
+
+HOW TO APPLY:
+  Open: brave/components/constants/webui_url_constants.h
+  After the line:
+      inline constexpr char kBraveAccountURL[] = "chrome://account/";
+  Insert:
+      // BrowseHere — built-in video player / detector (chrome://browse-here)
+      inline constexpr char kBrowseHereHost[] = "browse-here";
+      inline constexpr char kBrowseHereURL[]  = "chrome://browse-here/";
