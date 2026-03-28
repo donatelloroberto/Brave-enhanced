@@ -8,6 +8,7 @@
 #include "brave/browser/browse_here/browse_here_service_factory.h"
 
 #include "brave/components/browse_here/browser/browse_here_service.h"
+#include "chrome/browser/profiles/incognito_helpers.h"
 #include "chrome/browser/profiles/profile.h"
 #include "components/keyed_service/content/browser_context_dependency_manager.h"
 #include "components/prefs/pref_service.h"
@@ -41,6 +42,7 @@ KeyedService* BrowseHereServiceFactory::BuildServiceInstanceFor(
 
 content::BrowserContext* BrowseHereServiceFactory::GetBrowserContextToUse(
     content::BrowserContext* context) const {
-  // Use the original profile (not incognito)
+  // Redirect incognito profiles to the original profile so the playlist is
+  // shared — matches how Brave Rewards and Wallet handle this.
   return chrome::GetBrowserContextRedirectedInIncognito(context);
 }
