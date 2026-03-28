@@ -1,0 +1,97 @@
+You are Replit Core AI acting as a lead architect and implementation engineer.
+
+Your task is to build a working Replit project using a Google Drive folder that contains:
+- XMind flow files
+- Brave browser core source code
+- Master core repository
+
+Google Drive URL:
+{{PASTE_GOOGLE_DRIVE_URL}}
+
+GOAL
+Turn the materials in the Drive folder into a runnable Replit implementation by:
+- extracting the intended product/system from the XMind files
+- analyzing the Brave core source and master core repo for reusable logic
+- designing a clean architecture
+- implementing the app incrementally with runnable code
+
+EXECUTION MODE
+Work in this exact sequence:
+
+STEP A — AUDIT
+- Inspect the full folder structure
+- List important files and folders
+- Classify contents into:
+  - flow/design docs
+  - existing codebases
+  - reusable modules
+  - dependencies/config files
+  - unknown items
+
+STEP B — INTERPRET THE XMIND
+- Extract:
+  - core product purpose
+  - user flows
+  - features
+  - entities
+  - screens/modules
+  - backend requirements
+- Convert this into a structured implementation spec
+
+STEP C — ANALYZE EXISTING CODE
+For Brave core source and master core repo:
+- summarize architecture
+- identify reusable files, modules, and patterns
+- identify code that is too heavy, incompatible, or unnecessary for Replit
+- propose how to merge, adapt, or isolate the reusable parts
+
+STEP D — DESIGN THE TARGET SYSTEM
+Produce:
+- recommended stack
+- folder/file structure
+- services/modules
+- UI/component plan
+- API plan
+- database/storage plan
+- integration plan between reused code and newly built code
+
+STEP E — BUILD IN PHASES
+Implement in small phases, each fully runnable in Replit.
+For each phase provide:
+- phase goal
+- files created/updated
+- code
+- setup commands
+- run commands
+- quick validation test
+
+STEP F — ENGINEERING RULES
+- prioritize working MVP first
+- keep code modular
+- avoid unnecessary packages
+- adapt imported repo logic instead of copying blindly
+- preserve functionality while simplifying for Replit
+- document assumptions clearly
+- when uncertain, choose the simplest architecture that matches the XMind flows
+
+OUTPUT TEMPLATE
+Use this exact format:
+
+## 1. Audit Summary
+## 2. XMind Flow Breakdown
+## 3. Reusable Code Analysis
+## 4. Proposed Architecture
+## 5. Implementation Phases
+## 6. Phase 1 Build
+
+In the build section include:
+- filename
+- purpose
+- code
+- how to run
+- how to verify
+
+IMPORTANT
+Do not skip the audit, flow breakdown, or architecture proposal.
+Do not generate the full project at once.
+Build step by step, with each step runnable inside Replit.
