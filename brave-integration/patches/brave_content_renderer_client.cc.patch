@@ -1,0 +1,43 @@
+--- a/renderer/brave_content_renderer_client.cc
++++ b/renderer/brave_content_renderer_client.cc
+
+CHANGE 1 — Add include at the top with other observer headers
+==============================================================
+Find this line:
+    #include "brave/renderer/brave_render_frame_observer.h"
+
+Add immediately after it:
+    #include "brave/components/browse_here/renderer/browse_here_render_frame_observer.h"
+
+
+CHANGE 2 — Instantiate the observer in RenderFrameCreated
+==========================================================
+Find the end of BraveContentRendererClient::RenderFrameCreated(), just before
+the closing brace. Add:
+
+    new browse_here::BrowseHereRenderFrameObserver(render_frame);
+
+The full relevant region will look like:
+
+    void BraveContentRendererClient::RenderFrameCreated(
+        content::RenderFrame* render_frame) {
+      ChromeContentRendererClient::RenderFrameCreated(render_frame);
+      auto* rfo = new BraveRenderFrameObserver(render_frame);
+      auto* registry = rfo->registry();
+      ...
+      // ---- ADD THIS LINE ----
+      new browse_here::BrowseHereRenderFrameObserver(render_frame);
+    }
+
+
+DIFF (unified format for reference):
+=====================================
+@@ RenderFrameCreated
++  new browse_here::BrowseHereRenderFrameObserver(render_frame);
+ }
+
+
+CHANGE 3 — Add BUILD.gn dependency
+====================================
+In renderer/BUILD.gn (or renderer/sources.gni), add to the deps list:
+    "//brave/components/browse_here/renderer:browse_here_renderer",
