@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "TCL Stream Player"
+version = "1.0.0"
+id = "artifacts/tcl-player"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20527
+
+[services.development]
+run = "pnpm --filter @workspace/tcl-player run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/tcl-player", "run", "build" ]
+publicDir = "artifacts/tcl-player/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20527"
+BASE_PATH = "/"
