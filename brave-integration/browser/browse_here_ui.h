@@ -9,7 +9,6 @@
 #define BRAVE_BROWSER_UI_WEBUI_BROWSE_HERE_BROWSE_HERE_UI_H_
 
 #include "brave/components/browse_here/common/browse_here.mojom.h"
-#include "content/public/browser/web_ui_controller.h"
 #include "mojo/public/cpp/bindings/pending_receiver.h"
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "mojo/public/cpp/bindings/receiver.h"
@@ -17,19 +16,29 @@
 
 namespace content {
 class WebUI;
-}
+}  // namespace content
+
+namespace browse_here {
+class BrowseHereService;
+}  // namespace browse_here
 
 // ---------------------------------------------------------------------------
-// BrowseHereUI
+// BrowseHereUI  —  chrome://browse-here WebUI controller
 //
-// Controls the brave://browse-here WebUI page.
-// It bridges the React frontend to BrowseHereService.
+// Entry points to wire up:
+//   1. brave/components/constants/webui_url_constants.h
+//        Add: kBrowseHereHost, kBrowseHereURL
 //
-// Registration:
-//   Add to chrome/browser/ui/webui/chrome_web_ui_controller_factory.cc
-//   and brave/browser/ui/webui/brave_web_ui_controller_factory.cc
+//   2. brave/browser/ui/webui/brave_web_ui_controller_factory.cc
+//        In GetWebUIFactoryFunction(), add:
+//          if (url.host() == kBrowseHereHost) {
+//            return &NewWebUI<BrowseHereUI>;
+//          }
+//        Also add include at top:
+//          #include "brave/browser/ui/webui/browse_here/browse_here_ui.h"
 //
-// URL: brave://browse-here
+//   3. renderer/brave_content_renderer_client.cc  (see .patch file)
+//        Instantiate BrowseHereRenderFrameObserver in RenderFrameCreated().
 // ---------------------------------------------------------------------------
 
 class BrowseHereUI : public ui::MojoWebUIController,
@@ -40,14 +49,16 @@ class BrowseHereUI : public ui::MojoWebUIController,
   BrowseHereUI& operator=(const BrowseHereUI&) = delete;
   ~BrowseHereUI() override;
 
-  // Called by the WebUI page to set up the Mojo pipe.
+  // Called by the WebUI page to establish the Mojo pipe.
   void BindInterface(
       mojo::PendingReceiver<brave_browse_here::mojom::BrowseHerePageHandler>
           receiver);
 
   // ---------------------------------------------------------------------------
-  // BrowseHerePageHandler (Mojo)
+  // brave_browse_here::mojom::BrowseHerePageHandler
   // ---------------------------------------------------------------------------
+  void SetPage(mojo::PendingRemote<brave_browse_here::mojom::BrowseHerePage>
+                   page) override;
   void GetPlaylist(GetPlaylistCallback callback) override;
   void AddToPlaylist(brave_browse_here::mojom::VideoSourcePtr video,
                      AddToPlaylistCallback callback) override;
@@ -57,6 +68,10 @@ class BrowseHereUI : public ui::MojoWebUIController,
   void ScanCurrentPage() override;
 
  private:
+  // Returns BrowseHereService for the current profile. Non-null after the
+  // KeyedService factory is registered at startup.
+  browse_here::BrowseHereService* GetService();
+
   mojo::Receiver<brave_browse_here::mojom::BrowseHerePageHandler>
       page_handler_receiver_{this};
 
