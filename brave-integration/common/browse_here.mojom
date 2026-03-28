@@ -1,0 +1,78 @@
+// Copyright (c) 2024 The Brave Authors. All rights reserved.
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this file,
+// You can obtain one at https://mozilla.org/MPL/2.0/.
+
+// DROP INTO: brave/components/browse_here/common/browse_here.mojom
+
+module brave_browse_here.mojom;
+
+// Represents a detected video source from a webpage.
+struct VideoSource {
+  string url;
+  string type;    // "mp4", "hls", "dash", "webm", "iframe", "unknown"
+  string title;
+  string? quality;
+  double? duration;
+  string? thumbnail;
+  string source_host;
+};
+
+// Represents a saved playlist entry (stored to disk via KeyedService).
+struct PlaylistEntry {
+  int32 id;
+  string url;
+  string type;
+  string title;
+  string? quality;
+  double? duration;
+  string? thumbnail;
+  string source_host;
+  string added_at;  // ISO 8601
+};
+
+// ---------------------------------------------------------
+// Renderer -> Browser: report detected videos
+// ---------------------------------------------------------
+// Implemented in the browser process (BrowseHereService).
+interface BrowseHereHost {
+  // Called by the renderer content script when it detects video sources
+  // on the currently active page.
+  OnVideosDetected(array<VideoSource> videos, string page_title, string page_url);
+};
+
+// ---------------------------------------------------------
+// Browser -> Renderer: commands sent to the scanner
+// ---------------------------------------------------------
+// Implemented in the renderer process.
+interface BrowseHereClient {
+  // Ask the renderer to re-scan the current page immediately.
+  RequestScan();
+};
+
+// ---------------------------------------------------------
+// WebUI <-> Browser: the brave://browse-here page uses this
+// ---------------------------------------------------------
+// Implemented in the browser process (BrowseHerePageHandler).
+interface BrowseHerePageHandler {
+  // Fetch saved playlist entries from disk.
+  GetPlaylist() => (array<PlaylistEntry> entries);
+
+  // Add a detected video to the persistent playlist.
+  AddToPlaylist(VideoSource video) => (PlaylistEntry entry);
+
+  // Remove an entry from the playlist by ID.
+  RemoveFromPlaylist(int32 id) => (bool success);
+
+  // Get the most recently detected videos (from the active tab).
+  GetDetectedVideos() => (array<VideoSource> videos, string page_title);
+
+  // Trigger a fresh scan of the active tab.
+  ScanCurrentPage();
+};
+
+// Events pushed from the browser to the WebUI page.
+interface BrowseHerePage {
+  // Called when the scanner detects new videos on the active tab.
+  OnVideosDetected(array<VideoSource> videos, string page_title, string page_url);
+};

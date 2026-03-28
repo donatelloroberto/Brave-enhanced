@@ -1,0 +1,108 @@
+# Copyright (c) 2024 The Brave Authors. All rights reserved.
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at https://mozilla.org/MPL/2.0/.
+
+# DROP INTO: brave/components/browse_here/BUILD.gn  (component target)
+#            brave/browser/browse_here/BUILD.gn      (browser target)
+#
+# Then add deps in:
+#   brave/browser/BUILD.gn          → ":browse_here_browser"
+#   brave/renderer/BUILD.gn         → ":browse_here_renderer"
+#   brave/browser/ui/webui/BUILD.gn → ":browse_here_webui"
+
+# ============================================================
+# 1. Mojo interface library
+# ============================================================
+mojom("browse_here_mojo") {
+  sources = [ "//brave/components/browse_here/common/browse_here.mojom" ]
+
+  public_deps = [
+    "//mojo/public/mojom/base",
+  ]
+}
+
+# ============================================================
+# 2. Browser-process component (KeyedService)
+# ============================================================
+source_set("browse_here_browser") {
+  sources = [
+    "//brave/components/browse_here/browser/browse_here_service.cc",
+    "//brave/components/browse_here/browser/browse_here_service.h",
+    "//brave/browser/browse_here/browse_here_service_factory.cc",
+    "//brave/browser/browse_here/browse_here_service_factory.h",
+  ]
+
+  deps = [
+    ":browse_here_mojo",
+    "//base",
+    "//base/json",
+    "//chrome/browser/profiles",
+    "//components/keyed_service/content",
+    "//components/prefs",
+    "//mojo/public/cpp/bindings",
+  ]
+}
+
+# ============================================================
+# 3. Renderer-process observer + scanner injection
+# ============================================================
+source_set("browse_here_renderer") {
+  sources = [
+    "//brave/components/browse_here/renderer/browse_here_render_frame_observer.cc",
+    "//brave/components/browse_here/renderer/browse_here_render_frame_observer.h",
+  ]
+
+  deps = [
+    ":browse_here_mojo",
+    ":browse_here_renderer_resources",
+    "//base",
+    "//content/public/renderer",
+    "//mojo/public/cpp/bindings",
+    "//third_party/blink/public:blink",
+    "//ui/base",
+  ]
+}
+
+# ============================================================
+# 4. Renderer resources (compiled scanner JS)
+# ============================================================
+grit("browse_here_renderer_resources") {
+  source = "//brave/components/browse_here/renderer/browse_here_renderer_resources.grd"
+  outputs = [
+    "grit/brave_browse_here_renderer_resources.h",
+    "brave_browse_here_renderer_resources.pak",
+  ]
+}
+
+# ============================================================
+# 5. WebUI page (brave://browse-here)
+# ============================================================
+source_set("browse_here_webui") {
+  sources = [
+    "//brave/browser/ui/webui/browse_here/browse_here_ui.cc",
+    "//brave/browser/ui/webui/browse_here/browse_here_ui.h",
+  ]
+
+  deps = [
+    ":browse_here_browser",
+    ":browse_here_mojo",
+    ":browse_here_webui_resources",
+    "//chrome/browser/profiles",
+    "//chrome/browser/ui",
+    "//content/public/browser",
+    "//mojo/public/cpp/bindings",
+    "//ui/webui",
+  ]
+}
+
+# ============================================================
+# 6. WebUI frontend resources (React app bundle)
+# ============================================================
+grit("browse_here_webui_resources") {
+  source = "//brave/browser/resources/browse_here/browse_here_resources.grd"
+  outputs = [
+    "grit/brave_browse_here_resources.h",
+    "brave_browse_here_resources.pak",
+  ]
+}
