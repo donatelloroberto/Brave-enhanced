@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface DetectRequest {
+  /** The webpage URL to scan for video sources */
+  url: string;
 }

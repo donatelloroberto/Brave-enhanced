@@ -1,0 +1,120 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { Search, Film, Play, Trash2, CheckCircle } from 'lucide-react';
+
+/**
+ * MOCK BRAVE SERVICE (Simulating C++ KeyedService)
+ * This manages the global state of detected videos.
+ */
+const usePlaylistService = () => {
+  const [playlist, setPlaylist] = useState([]);
+
+  const addMedia = useCallback((url, title) => {
+    setPlaylist(prev => {
+      if (prev.find(item => item.url === url)) return prev;
+      return [...prev, { id: crypto.randomUUID(), url, title, timestamp: new Date() }];
+    });
+  }, []);
+
+  const removeMedia = (id) => {
+    setPlaylist(prev => prev.filter(item => item.id !== id));
+  };
+
+  return { playlist, addMedia, removeMedia };
+};
+
+/**
+ * MOCK CONTENT SCRIPT (Simulating Renderer-side Injection)
+ * This logic would normally live in brave/components/scanner/renderer
+ */
+const ScannerSimulator = ({ onDetect }) => {
+  const [mockInput, setMockInput] = useState('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8');
+
+  const handleSimulate = () => {
+    if (!mockInput) return;
+    onDetect(mockInput, `Detected Media ${Math.floor(Math.random() * 100)}`);
+    setMockInput('');
+  };
+
+  return (
+    <div className="p-4 bg-slate-800 rounded-xl border border-slate-700 shadow-lg mb-6">
+      <h3 className="text-sm font-bold text-slate-400 mb-3 flex items-center gap-2 uppercase tracking-tight">
+        <Search size={14} /> DOM Scanner Simulator
+      </h3>
+      <div className="flex gap-2">
+        <input 
+          value={mockInput}
+          onChange={(e) => setMockInput(e.target.value)}
+          placeholder="Enter video URL (.mp4, .m3u8)"
+          className="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+        />
+        <button 
+          onClick={handleSimulate}
+          className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all active:scale-95"
+        >
+          Inject & Detect
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default function App() {
+  const { playlist, addMedia, removeMedia } = usePlaylistService();
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-8 font-sans">
+      <div className="max-w-2xl mx-auto">
+        <header className="mb-10">
+          <h1 className="text-3xl font-black text-white flex items-center gap-3">
+            <div className="bg-blue-600 p-2 rounded-lg"><Film /></div>
+            BrowseHere <span className="text-blue-500 text-xl">v1.0</span>
+          </h1>
+          <p className="text-slate-400 mt-2">Core Architecture Phase 1: Detection & Service Bus</p>
+        </header>
+
+        <ScannerSimulator onDetect={addMedia} />
+
+        <section>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-bold flex items-center gap-2">
+              Media Queue <span className="bg-slate-800 text-xs px-2 py-1 rounded-full">{playlist.length}</span>
+            </h2>
+          </div>
+
+          <div className="space-y-3">
+            {playlist.length === 0 ? (
+              <div className="text-center py-12 border-2 border-dashed border-slate-800 rounded-2xl text-slate-600">
+                Waiting for video detection signals...
+              </div>
+            ) : (
+              playlist.map((item) => (
+                <div key={item.id} className="group bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center justify-between hover:border-blue-500/50 transition-all shadow-sm">
+                  <div className="flex items-center gap-4 overflow-hidden">
+                    <div className="bg-blue-500/10 p-2 rounded-lg text-blue-500">
+                      <CheckCircle size={20} />
+                    </div>
+                    <div className="overflow-hidden">
+                      <h4 className="font-bold text-sm truncate">{item.title}</h4>
+                      <p className="text-xs text-slate-500 truncate font-mono">{item.url}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
+                      <Play size={18} fill="currentColor" />
+                    </button>
+                    <button 
+                      onClick={() => removeMedia(item.id)}
+                      className="p-2 hover:bg-red-500/10 rounded-lg text-slate-400 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,15 @@
+packages:
+  "hls.js": "Required for playing HLS (.m3u8) video streams natively in the browser"
+  "zustand": "Lightweight global state management for the player and playlist"
+  "framer-motion": "Smooth cinematic animations and transitions for the TV interface"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility to cleanly merge Tailwind classes"
+
+images:
+  - path: "artifacts/tcl-player/public/images/tv-glow-bg.png"
+    description: "Cinematic dark abstract background with subtle deep cyan and blue glowing lights, resembling a premium smart TV standby screen"
+    aspect_ratio: "16:9"
+
+notes:
+  - Using generated hooks from @workspace/api-client-react
+  - Assuming the backend CORS proxies the URLs for the /api/detect endpoint
