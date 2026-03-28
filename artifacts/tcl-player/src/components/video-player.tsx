@@ -2,7 +2,7 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import Hls from "hls.js";
 import { usePlayerStore } from "@/store/use-player-store";
 import { formatTime, cn } from "@/lib/utils";
-import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Settings, Subtitles, Rewind, FastForward, Loader2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Maximize, Minimize, Settings, Subtitles, Rewind, FastForward, Loader2, PanelLeftClose, PanelLeftOpen, MonitorPlay } from "lucide-react";
 
 export function VideoPlayer() {
   const { currentVideo, isSidebarOpen, toggleSidebar } = usePlayerStore();

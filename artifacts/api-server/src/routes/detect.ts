@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import * as cheerio from "cheerio";
-import { DetectVideosBodyResponse, DetectVideosBody } from "@workspace/api-zod";
+import { DetectVideosResponse, DetectVideosBody } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
@@ -8,9 +8,9 @@ interface VideoSource {
   url: string;
   type: "mp4" | "hls" | "dash" | "webm" | "iframe" | "unknown";
   title: string;
-  quality: string | null;
-  duration: number | null;
-  thumbnail: string | null;
+  quality?: string;
+  duration?: number;
+  thumbnail?: string;
   sourceHost: string;
 }
 
@@ -62,6 +62,28 @@ router.post("/detect", async (req, res) => {
     return;
   }
 
+  // If the URL is a direct video file, return it immediately without scraping
+  const directVideoType = detectVideoType(targetUrl);
+  if (directVideoType !== "unknown") {
+    const directVideo: VideoSource = {
+      url: targetUrl,
+      type: directVideoType,
+      title: pageUrl.pathname.split("/").pop() || "Direct Stream",
+      quality: guessQuality(targetUrl) ?? undefined,
+      duration: undefined,
+      thumbnail: undefined,
+      sourceHost: pageUrl.hostname,
+    };
+    const result = DetectVideosResponse.parse({
+      videos: [directVideo],
+      pageTitle: directVideo.title,
+      scannedUrl: targetUrl,
+      count: 1,
+    });
+    res.json(result);
+    return;
+  }
+
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
@@ -95,38 +117,39 @@ router.post("/detect", async (req, res) => {
       const resolved = resolveUrl(url, targetUrl);
       if (!resolved || videosMap.has(resolved)) return;
       const type = detectVideoType(resolved);
-      videosMap.set(resolved, {
-        url: resolved,
-        type,
-        title: overrides.title || pageTitle || "Unknown Video",
-        quality: overrides.quality || guessQuality(resolved),
-        duration: overrides.duration || null,
-        thumbnail: overrides.thumbnail || null,
-        sourceHost,
-        ...overrides,
+      const entry: VideoSource = {
         url: resolved,
         type: overrides.type || type,
-      });
+        title: overrides.title || pageTitle || "Unknown Video",
+        sourceHost,
+      };
+      const quality = overrides.quality !== undefined ? overrides.quality : guessQuality(resolved) ?? undefined;
+      if (quality) entry.quality = quality;
+      if (overrides.duration !== undefined && overrides.duration !== null) entry.duration = overrides.duration;
+      if (overrides.thumbnail) entry.thumbnail = overrides.thumbnail;
+      videosMap.set(resolved, entry);
     }
 
     // 1. Direct <video> elements and their <source> children
     $("video").each((_, el) => {
       const src = $(el).attr("src");
-      const poster = $(el).attr("poster") || null;
-      const durationAttr = parseFloat($(el).attr("duration") || "") || null;
+      const poster = $(el).attr("poster") || undefined;
+      const durationAttrRaw = parseFloat($(el).attr("duration") || "");
+      const durationAttr = isNaN(durationAttrRaw) ? undefined : durationAttrRaw;
       const title =
         $(el).attr("title") ||
         $(el).attr("aria-label") ||
         pageTitle;
+      const thumbResolved = poster ? resolveUrl(poster, targetUrl) ?? undefined : undefined;
 
-      if (src) addVideo(src, { title, thumbnail: poster ? resolveUrl(poster, targetUrl) : null, duration: durationAttr });
+      if (src) addVideo(src, { title, thumbnail: thumbResolved, duration: durationAttr });
 
       $(el)
         .find("source")
         .each((_, src_el) => {
           const srcAttr = $(src_el).attr("src");
           if (srcAttr)
-            addVideo(srcAttr, { title, thumbnail: poster ? resolveUrl(poster, targetUrl) : null, duration: durationAttr });
+            addVideo(srcAttr, { title, thumbnail: thumbResolved, duration: durationAttr });
         });
     });
 
@@ -196,13 +219,13 @@ router.post("/detect", async (req, res) => {
     if (ogVideo) {
       addVideo(ogVideo, {
         title: $('meta[property="og:title"]').attr("content") || pageTitle,
-        thumbnail: ogThumb ? resolveUrl(ogThumb, targetUrl) : null,
+        thumbnail: ogThumb ? resolveUrl(ogThumb, targetUrl) ?? undefined : undefined,
       });
     }
 
     const videos = Array.from(videosMap.values());
 
-    const result = DetectVideosBodyResponse.parse({
+    const result = DetectVideosResponse.parse({
       videos,
       pageTitle,
       scannedUrl: targetUrl,

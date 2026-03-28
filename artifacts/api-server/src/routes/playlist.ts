@@ -2,7 +2,6 @@ import { Router, type IRouter } from "express";
 import { db, playlistTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import {
-  AddToPlaylistBodyResponse,
   AddToPlaylistBody,
   GetPlaylistResponse,
   RemoveFromPlaylistResponse,
@@ -18,10 +17,7 @@ router.get("/playlist", async (req, res) => {
       .orderBy(playlistTable.addedAt);
 
     const result = GetPlaylistResponse.parse({
-      entries: entries.map((e) => ({
-        ...e,
-        addedAt: e.addedAt.toISOString(),
-      })),
+      entries,
       count: entries.length,
     });
     res.json(result);
@@ -52,11 +48,7 @@ router.post("/playlist", async (req, res) => {
       })
       .returning();
 
-    const result = AddToPlaylistBodyResponse.parse({
-      ...entry,
-      addedAt: entry.addedAt.toISOString(),
-    });
-    res.status(201).json(result);
+    res.status(201).json(entry);
   } catch (err) {
     req.log.error({ err }, "Error adding to playlist");
     res.status(500).json({ error: "Failed to add to playlist" });

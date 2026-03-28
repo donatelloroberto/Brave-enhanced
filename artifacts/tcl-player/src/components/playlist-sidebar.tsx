@@ -3,7 +3,7 @@ import { usePlayerStore } from "@/store/use-player-store";
 import { useGetPlaylist, useAddToPlaylist, useRemoveFromPlaylist } from "@workspace/api-client-react";
 import type { VideoSource, PlaylistEntry } from "@workspace/api-client-react";
 import { cn, formatTime } from "@/lib/utils";
-import { Play, BookmarkPlus, Trash2, MonitorPlay, ListVideo, Library, Clock } from "lucide-react";
+import { Play, BookmarkPlus, Trash2, MonitorPlay, ListVideo, Library, Clock, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
