@@ -240,7 +240,7 @@
     "remark-directive": "4.0.0",
     "remark-gfm": "4.0.1",
     "throttleit": "1.0.0",
-    "webext-redux": "2.1.9"
+    "webext-redux": "4.0.0"
   },
   "overrides": {
     "@jest/transform": "npm:@brave/jest-transform@28.1.3",
