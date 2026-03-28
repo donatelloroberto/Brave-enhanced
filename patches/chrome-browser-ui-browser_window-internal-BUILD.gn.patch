@@ -1,0 +1,12 @@
+diff --git a/chrome/browser/ui/browser_window/internal/BUILD.gn b/chrome/browser/ui/browser_window/internal/BUILD.gn
+index f17e7a8a64ff5f86b943821fcb6520298804fb14..fa2a0a766029dc0281f3134feacc1775bbefd35a 100644
+--- a/chrome/browser/ui/browser_window/internal/BUILD.gn
++++ b/chrome/browser/ui/browser_window/internal/BUILD.gn
+@@ -149,6 +149,7 @@ source_set("internal") {
+   if (enable_extensions_core) {
+     deps += [ "//chrome/browser/extensions" ]
+   }
++  import("//brave/browser/ui/browser_window/internal/sources.gni") deps += brave_browser_window_internal_deps
+ }
+ 
+ source_set("unit_tests") {

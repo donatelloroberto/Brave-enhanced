@@ -1,0 +1,12 @@
+diff --git a/ios/chrome/browser/flags/about_flags.mm b/ios/chrome/browser/flags/about_flags.mm
+index 9e51b01e0decbf4c32e80c4f33d99fc3b2754bcd..c8ecade073b46785bf279779c5e3050552fb4e0d 100644
+--- a/ios/chrome/browser/flags/about_flags.mm
++++ b/ios/chrome/browser/flags/about_flags.mm
+@@ -1403,6 +1403,7 @@ const FeatureEntry::FeatureVariation kAssistantContainerVariations[] = {
+ //
+ // When adding a new choice, add it to the end of the list.
+ constexpr auto kFeatureEntries = std::to_array<flags_ui::FeatureEntry>({
++    BRAVE_ABOUT_FLAGS_FEATURE_ENTRIES
+     {"in-product-help-demo-mode-choice",
+      flag_descriptions::kInProductHelpDemoModeName,
+      flag_descriptions::kInProductHelpDemoModeDescription, flags_ui::kOsIos,
